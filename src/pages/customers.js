@@ -1,290 +1,363 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Head from 'next/head';
-import { subDays, subHours } from 'date-fns';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
-import { useSelection } from 'src/hooks/use-selection';
+import {
+  Box,
+  Container,
+  Stack,
+  Typography,
+  CircularProgress,
+  Grid,
+  Table,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableBody,
+  TablePagination,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { CustomersTable } from 'src/sections/customer/customers-table';
-import { CustomersSearch } from 'src/sections/customer/customers-search';
-import { applyPagination } from 'src/utils/apply-pagination';
-
-const now = new Date();
-
-const data = [
-  {
-    id: '5e887ac47eed253091be10cb',
-    address: {
-      city: 'Cleveland',
-      country: 'USA',
-      state: 'Ohio',
-      street: '2849 Fulton Street'
-    },
-    avatar: '/assets/avatars/avatar-carson-darrin.png',
-    createdAt: subDays(subHours(now, 7), 1).getTime(),
-    email: 'carson.darrin@devias.io',
-    name: 'Carson Darrin',
-    phone: '304-428-3097'
-  },
-  {
-    id: '5e887b209c28ac3dd97f6db5',
-    address: {
-      city: 'Atlanta',
-      country: 'USA',
-      state: 'Georgia',
-      street: '1865  Pleasant Hill Road'
-    },
-    avatar: '/assets/avatars/avatar-fran-perez.png',
-    createdAt: subDays(subHours(now, 1), 2).getTime(),
-    email: 'fran.perez@devias.io',
-    name: 'Fran Perez',
-    phone: '712-351-5711'
-  },
-  {
-    id: '5e887b7602bdbc4dbb234b27',
-    address: {
-      city: 'North Canton',
-      country: 'USA',
-      state: 'Ohio',
-      street: '4894  Lakeland Park Drive'
-    },
-    avatar: '/assets/avatars/avatar-jie-yan-song.png',
-    createdAt: subDays(subHours(now, 4), 2).getTime(),
-    email: 'jie.yan.song@devias.io',
-    name: 'Jie Yan Song',
-    phone: '770-635-2682'
-  },
-  {
-    id: '5e86809283e28b96d2d38537',
-    address: {
-      city: 'Madrid',
-      country: 'Spain',
-      name: 'Anika Visser',
-      street: '4158  Hedge Street'
-    },
-    avatar: '/assets/avatars/avatar-anika-visser.png',
-    createdAt: subDays(subHours(now, 11), 2).getTime(),
-    email: 'anika.visser@devias.io',
-    name: 'Anika Visser',
-    phone: '908-691-3242'
-  },
-  {
-    id: '5e86805e2bafd54f66cc95c3',
-    address: {
-      city: 'San Diego',
-      country: 'USA',
-      state: 'California',
-      street: '75247'
-    },
-    avatar: '/assets/avatars/avatar-miron-vitold.png',
-    createdAt: subDays(subHours(now, 7), 3).getTime(),
-    email: 'miron.vitold@devias.io',
-    name: 'Miron Vitold',
-    phone: '972-333-4106'
-  },
-  {
-    id: '5e887a1fbefd7938eea9c981',
-    address: {
-      city: 'Berkeley',
-      country: 'USA',
-      state: 'California',
-      street: '317 Angus Road'
-    },
-    avatar: '/assets/avatars/avatar-penjani-inyene.png',
-    createdAt: subDays(subHours(now, 5), 4).getTime(),
-    email: 'penjani.inyene@devias.io',
-    name: 'Penjani Inyene',
-    phone: '858-602-3409'
-  },
-  {
-    id: '5e887d0b3d090c1b8f162003',
-    address: {
-      city: 'Carson City',
-      country: 'USA',
-      state: 'Nevada',
-      street: '2188  Armbrester Drive'
-    },
-    avatar: '/assets/avatars/avatar-omar-darboe.png',
-    createdAt: subDays(subHours(now, 15), 4).getTime(),
-    email: 'omar.darobe@devias.io',
-    name: 'Omar Darobe',
-    phone: '415-907-2647'
-  },
-  {
-    id: '5e88792be2d4cfb4bf0971d9',
-    address: {
-      city: 'Los Angeles',
-      country: 'USA',
-      state: 'California',
-      street: '1798  Hickory Ridge Drive'
-    },
-    avatar: '/assets/avatars/avatar-siegbert-gottfried.png',
-    createdAt: subDays(subHours(now, 2), 5).getTime(),
-    email: 'siegbert.gottfried@devias.io',
-    name: 'Siegbert Gottfried',
-    phone: '702-661-1654'
-  },
-  {
-    id: '5e8877da9a65442b11551975',
-    address: {
-      city: 'Murray',
-      country: 'USA',
-      state: 'Utah',
-      street: '3934  Wildrose Lane'
-    },
-    avatar: '/assets/avatars/avatar-iulia-albu.png',
-    createdAt: subDays(subHours(now, 8), 6).getTime(),
-    email: 'iulia.albu@devias.io',
-    name: 'Iulia Albu',
-    phone: '313-812-8947'
-  },
-  {
-    id: '5e8680e60cba5019c5ca6fda',
-    address: {
-      city: 'Salt Lake City',
-      country: 'USA',
-      state: 'Utah',
-      street: '368 Lamberts Branch Road'
-    },
-    avatar: '/assets/avatars/avatar-nasimiyu-danai.png',
-    createdAt: subDays(subHours(now, 1), 9).getTime(),
-    email: 'nasimiyu.danai@devias.io',
-    name: 'Nasimiyu Danai',
-    phone: '801-301-7894'
-  }
-];
-
-const useCustomers = (page, rowsPerPage) => {
-  return useMemo(
-    () => {
-      return applyPagination(data, page, rowsPerPage);
-    },
-    [page, rowsPerPage]
-  );
-};
-
-const useCustomerIds = (customers) => {
-  return useMemo(
-    () => {
-      return customers.map((customer) => customer.id);
-    },
-    [customers]
-  );
-};
+import { useAuth } from 'src/hooks/use-auth';
 
 const Page = () => {
+  const auth = useAuth();
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
-  const customersIds = useCustomerIds(customers);
-  const customersSelection = useSelection(customersIds);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [orderBy, setOrderBy] = useState('');
+  const [order, setOrder] = useState('asc');
+  const [adjustedStoreCredit, setAdjustedStoreCredit] = useState(0);
+  const [adjustStoreCreditOpen, setAdjustStoreCreditOpen] = useState(false);
 
-  const handlePageChange = useCallback(
-    (event, value) => {
-      setPage(value);
-    },
-    []
-  );
+  const openAdjustStoreCredit = () => {
+    setAdjustedStoreCredit(selectedCustomer.storeCredit);
+    setAdjustStoreCreditOpen(true);
+  };
 
-  const handleRowsPerPageChange = useCallback(
-    (event) => {
-      setRowsPerPage(event.target.value);
-    },
-    []
-  );
+  const closeAdjustStoreCredit = () => {
+    setAdjustStoreCreditOpen(false);
+  };
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axios.get('https://api.tcgsync.com:4000/api/test/shopify_customers', {
+          headers: {
+            'X-Access-Token': auth.user.accessToken,
+          },
+        });
+        if (response.data.success === 1 && response.data.response === 200) {
+          setCustomers(response.data.data.customers);
+          setFilteredCustomers(response.data.data.customers);
+          setLoading(false);
+        } else {
+          console.error('Failed to fetch customers:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      }
+    };
+    fetchCustomers();
+  }, [auth.user.accessToken]);
+
+  useEffect(() => {
+    setFilteredCustomers(
+      customers.filter((customer) =>
+        `${customer.firstName} ${customer.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.orders.some(order => order.id.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    );
+  }, [searchQuery, customers]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClickCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedCustomer(null);
+    setOpenDialog(false);
+  };
+
+  const handleClickOrder = (order) => {
+    setSelectedOrder(order);
+    setOpenOrderDialog(true);
+  };
+
+  const handleCloseOrderDialog = () => {
+    setSelectedOrder(null);
+    setOpenOrderDialog(false);
+  };
+
+  const handleSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+    const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+      if (property === 'totalOrders') {
+        return isAsc
+          ? a.orders.length - b.orders.length
+          : b.orders.length - a.orders.length;
+      } else if (property === 'totalSpend') {
+        const totalSpendA = a.orders.reduce((acc, order) => acc + parseFloat(order.totalPrice), 0);
+        const totalSpendB = b.orders.reduce((acc, order) => acc + parseFloat(order.totalPrice), 0);
+        return isAsc ? totalSpendA - totalSpendB : totalSpendB - totalSpendA;
+      } else if (property === 'storeCredit') {
+        return isAsc
+          ? a.storeCredit - b.storeCredit
+          : b.storeCredit - a.storeCredit;
+      } else {
+        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+        return isAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      }
+    });
+    setFilteredCustomers(sortedCustomers);
+  };
+
+  const adjustStoreCredit = async (customer, storeCredit) => {
+    const updatedCustomers = customers.map(customer => {
+      if (customer.id === selectedCustomer.id) {
+        return { ...customer, storeCredit: adjustedStoreCredit };
+      }
+      return customer;
+    });
+    const response = await axios.get(`https://api.tcgsync.com:4000/api/test/shopify/adjustCredit?customerId=${customer}&newStoreCredit=${storeCredit}`, {
+      headers: {
+        'X-Access-Token': auth.user.accessToken,
+      },
+    });
+    if (response.data.success === 1 && response.data.response === 200) {
+      setLoading(false);
+    } else {
+      console.error('Failed to fetch customers:', response.data.message);
+    }
+    setCustomers(updatedCustomers);
+    setFilteredCustomers(updatedCustomers);
+
+    handleCloseDialog();
+    setAdjustStoreCreditOpen(false);
+  };
+
+  const renderNotNull = (value) => (value ? value : "N/A");
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const emptyRows = rowsPerPage - Math.min(rowsPerPage, filteredCustomers.length - page * rowsPerPage);
 
   return (
     <>
       <Head>
-        <title>
-          Customers | Devias Kit
-        </title>
+        <title>Customers | TCGSync v2</title>
       </Head>
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          py: 8
+          py: 8,
         }}
       >
         <Container maxWidth="xl">
           <Stack spacing={3}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              spacing={4}
-            >
-              <Stack spacing={1}>
-                <Typography variant="h4">
-                  Customers
-                </Typography>
-                <Stack
-                  alignItems="center"
-                  direction="row"
-                  spacing={1}
-                >
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowUpOnSquareIcon />
-                      </SvgIcon>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Search customers"
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  fullWidth
+                  sx={{ mb: 3 }}
+                />
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        <a onClick={() => handleSort('firstName')}>First Name</a>
+                      </TableCell>
+                      <TableCell>
+                        <a onClick={() => handleSort('lastName')}>Last Name</a>
+                      </TableCell>
+                      <TableCell>
+                        <a onClick={() => handleSort('email')}>Email</a>
+                      </TableCell>
+                      <TableCell>Address</TableCell>
+                      <TableCell>
+                        <a onClick={() => handleSort('storeCredit')}>Store Credit</a>
+                      </TableCell>
+                      <TableCell>
+                        <a onClick={() => handleSort('totalOrders')}>Total Orders</a>
+                      </TableCell>
+                      <TableCell>
+                        <a onClick={() => handleSort('totalSpend')}>Total Spend</a>
+                      </TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(loading || filteredCustomers.length === 0) ? (
+                      <TableRow>
+                        <TableCell colSpan={7}>
+                          <CircularProgress />
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredCustomers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((customer) => (
+                        <TableRow key={customer.id} hover onClick={() => handleClickCustomer(customer)}>
+                          <TableCell>{renderNotNull(customer.firstName)}</TableCell>
+                          <TableCell>{renderNotNull(customer.lastName)}</TableCell>
+                          <TableCell>{customer.email}</TableCell>
+                          <TableCell>{`${customer.addresses[0]?.address1}, ${customer.addresses[0]?.city}, ${customer.addresses[0]?.province}, ${customer.addresses[0]?.country}, ${customer.addresses[0]?.zip}`}</TableCell>
+                          <TableCell>{customer.storeCredit ? customer.storeCredit : 0}</TableCell>
+                          <TableCell>{customer.orders.length}</TableCell>
+                          <TableCell>{customer.orders.reduce((acc, order) => acc + parseFloat(order.totalPrice), 0).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Button variant="outlined" onClick={() => handleClickCustomer(customer)}>View Orders</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     )}
-                  >
-                    Import
-                  </Button>
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowDownOnSquareIcon />
-                      </SvgIcon>
+                    {emptyRows > 0 && (
+                      <TableRow style={{ height: 53 * emptyRows }}>
+                        <TableCell colSpan={7} />
+                      </TableRow>
                     )}
-                  >
-                    Export
-                  </Button>
-                </Stack>
-              </Stack>
-              <div>
-                <Button
-                  startIcon={(
-                    <SvgIcon fontSize="small">
-                      <PlusIcon />
-                    </SvgIcon>
-                  )}
-                  variant="contained"
-                >
-                  Add
-                </Button>
-              </div>
-            </Stack>
-            <CustomersSearch />
-            <CustomersTable
-              count={data.length}
-              items={customers}
-              onDeselectAll={customersSelection.handleDeselectAll}
-              onDeselectOne={customersSelection.handleDeselectOne}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              onSelectAll={customersSelection.handleSelectAll}
-              onSelectOne={customersSelection.handleSelectOne}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              selected={customersSelection.selected}
-            />
+                  </TableBody>
+                </Table>
+              </Grid>
+            </Grid>
           </Stack>
         </Container>
       </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredCustomers.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Box>
+      <Dialog fullWidth maxWidth="md" open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Customer Details</DialogTitle>
+        <DialogContent>
+          {selectedCustomer && (
+            <Box>
+              <Typography variant="h6">Name: {`${selectedCustomer.firstName} ${selectedCustomer.lastName}`}</Typography>
+              <Typography variant="subtitle1">Email: {selectedCustomer.email}</Typography>
+              <Typography variant="subtitle1">Address: {`${selectedCustomer.addresses[0]?.address1}, ${selectedCustomer.addresses[0]?.city}, ${selectedCustomer.addresses[0]?.province}, ${selectedCustomer.addresses[0]?.country}, ${selectedCustomer.addresses[0]?.zip}`}</Typography>
+              <Typography variant="h6">Orders:</Typography>
+              <ul>
+                {selectedCustomer.orders.map((order) => (
+                  <li key={order.id} onClick={() => handleClickOrder(order)}>{order.name}</li>
+                ))}
+              </ul>
+              <Button variant="contained" onClick={openAdjustStoreCredit}>Adjust Store Credit</Button>
+              <Dialog fullWidth maxWidth="md" open={adjustStoreCreditOpen} onClose={closeAdjustStoreCredit}>
+                <DialogTitle>Adjust Store Credit</DialogTitle>
+                <DialogContent>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                      Current Store Credit: {Number(selectedCustomer.storeCredit)}
+                    </Typography>
+                    <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) + 1)}>+1</Button>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) + 5)}>+5</Button>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) + 10)}>+10</Button>
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) - 1)}>-1</Button>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) - 5)}>-5</Button>
+                      <Button variant="outlined" onClick={() => setAdjustedStoreCredit(Number(selectedCustomer.storeCredit) - 10)}>-10</Button>
+                    </Stack>
+                    <TextField
+                      label="Custom Amount (-)"
+                      variant="outlined"
+                      type="number"
+                      value={adjustedStoreCredit}
+                      onChange={(e) => setAdjustedStoreCredit(Number(e.target.value))}
+                      fullWidth
+                      sx={{ mb: 2 }}
+                    />
+                    <Button variant="contained" onClick={() => adjustStoreCredit(selectedCustomer._id, adjustedStoreCredit)}>Adjust Store Credit</Button>
+                  </Box>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={closeAdjustStoreCredit}>Cancel</Button>
+                </DialogActions>
+              </Dialog>
+
+
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog fullWidth maxWidth="md" open={openOrderDialog} onClose={handleCloseOrderDialog}>
+        <DialogTitle>Order Details</DialogTitle>
+        <DialogContent>
+          {selectedOrder && (
+            <Box>
+              <Typography variant="h6">Order: {selectedOrder.name}</Typography>
+              <Typography variant="subtitle1">Total Price: {selectedOrder.totalPrice}</Typography>
+              <Typography variant="subtitle1">Order Items:</Typography>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Vendor</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedOrder.lineItems.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.title}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.vendor}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseOrderDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
 
-Page.getLayout = (page) => (
-  <DashboardLayout>
-    {page}
-  </DashboardLayout>
-);
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 export default Page;

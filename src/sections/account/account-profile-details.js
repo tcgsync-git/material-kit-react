@@ -30,14 +30,14 @@ const states = [
   }
 ];
 
-export const AccountProfileDetails = () => {
+export const AccountProfileDetails = ({ user }) => { // Accept user as a prop
   const [values, setValues] = useState({
-    firstName: 'Anika',
-    lastName: 'Visser',
-    email: 'demo@devias.io',
-    phone: '',
-    state: 'los-angeles',
-    country: 'USA'
+    firstName: user.forename, // Initialize with user's data
+    lastName: user.surname,
+    email: user.email || '', // Handle cases where phone might be null
+    phone: user.contactnumber ?  user.contactnumber : '', // Handle cases where phone might be null || '', // Handle cases where phone might be null
+    state: user.state || 'los-angeles', // Handle cases where state might be null
+    country: user.country || 'USA' // Handle cases where country might be null
   });
 
   const handleChange = useCallback(
@@ -53,6 +53,7 @@ export const AccountProfileDetails = () => {
   const handleSubmit = useCallback(
     (event) => {
       event.preventDefault();
+      // You can handle form submission here if needed
     },
     []
   );
@@ -127,43 +128,8 @@ export const AccountProfileDetails = () => {
                   value={values.phone}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
-                <TextField
-                  fullWidth
-                  label="Country"
-                  name="country"
-                  onChange={handleChange}
-                  required
-                  value={values.country}
-                />
-              </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
-                <TextField
-                  fullWidth
-                  label="Select State"
-                  name="state"
-                  onChange={handleChange}
-                  required
-                  select
-                  SelectProps={{ native: true }}
-                  value={values.state}
-                >
-                  {states.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
-                </TextField>
-              </Grid>
+        
+             
             </Grid>
           </Box>
         </CardContent>

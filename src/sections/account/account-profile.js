@@ -9,16 +9,7 @@ import {
   Typography
 } from '@mui/material';
 
-const user = {
-  avatar: '/assets/avatars/avatar-anika-visser.png',
-  city: 'Los Angeles',
-  country: 'USA',
-  jobTitle: 'Senior Developer',
-  name: 'Anika Visser',
-  timezone: 'GTM-7'
-};
-
-export const AccountProfile = () => (
+export const AccountProfile = ({ user }) => ( // Correctly destructure the user prop
   <Card>
     <CardContent>
       <Box
@@ -40,7 +31,7 @@ export const AccountProfile = () => (
           gutterBottom
           variant="h5"
         >
-          {user.name}
+          {user.firstName}
         </Typography>
         <Typography
           color="text.secondary"

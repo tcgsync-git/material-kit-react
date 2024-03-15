@@ -71,20 +71,6 @@ const useChartOptions = () => {
         color: theme.palette.divider,
         show: true
       },
-      categories: [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec'
-      ],
       labels: {
         offsetY: 5,
         style: {
@@ -94,7 +80,7 @@ const useChartOptions = () => {
     },
     yaxis: {
       labels: {
-        formatter: (value) => (value > 0 ? `${value}K` : `${value}`),
+        formatter: (value) => (value > 0 ? `${value}` : `${value}`),
         offsetX: -10,
         style: {
           colors: theme.palette.text.secondary
@@ -103,27 +89,14 @@ const useChartOptions = () => {
     }
   };
 };
-
 export const OverviewSales = (props) => {
   const { chartSeries, sx } = props;
   const chartOptions = useChartOptions();
-
+  console.log(chartSeries, sx)
   return (
     <Card sx={sx}>
       <CardHeader
-        action={(
-          <Button
-            color="inherit"
-            size="small"
-            startIcon={(
-              <SvgIcon fontSize="small">
-                <ArrowPathIcon />
-              </SvgIcon>
-            )}
-          >
-            Sync
-          </Button>
-        )}
+        
         title="Sales"
       />
       <CardContent>
@@ -144,16 +117,17 @@ export const OverviewSales = (props) => {
               <ArrowRightIcon />
             </SvgIcon>
           )}
+          href='/orders/'
           size="small"
         >
-          Overview
+          View Sales
         </Button>
       </CardActions>
     </Card>
   );
 };
 
-OverviewSales.protoTypes = {
+OverviewSales.propTypes = {
   chartSeries: PropTypes.array.isRequired,
   sx: PropTypes.object
 };

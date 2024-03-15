@@ -4,7 +4,8 @@ import PropTypes from 'prop-types';
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
-  SIGN_OUT: 'SIGN_OUT'
+  SIGN_OUT: 'SIGN_OUT',
+  UPDATE_USER: 'UPDATE_USER' // New action type
 };
 
 const initialState = {
@@ -48,6 +49,14 @@ const handlers = {
       isAuthenticated: false,
       user: null
     };
+  },
+  [HANDLERS.UPDATE_USER]: (state, action) => {
+    const updatedUser = action.payload;
+
+    return {
+      ...state,
+      user: updatedUser
+    };
   }
 };
 
@@ -81,16 +90,11 @@ export const AuthProvider = (props) => {
     }
 
     if (isAuthenticated) {
-      const user = {
-        id: '5e86809283e28b96d2d38537',
-        avatar: '/assets/avatars/avatar-anika-visser.png',
-        name: 'Anika Visser',
-        email: 'anika.visser@devias.io'
-      };
+      const user = window.sessionStorage.getItem('user');
 
       dispatch({
         type: HANDLERS.INITIALIZE,
-        payload: user
+        payload: JSON.parse(user)
       });
     } else {
       dispatch({
@@ -107,57 +111,67 @@ export const AuthProvider = (props) => {
     []
   );
 
-  const skip = () => {
+
+  const signIn = async (username, password) => {
     try {
-      window.sessionStorage.setItem('authenticated', 'true');
+      const response = await fetch('https://api.tcgsync.com:4000/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json()
+      if (data.success == 1) {
+        const user = await data.data.user;
+        const accessToken = await data.data.accessToken;
+        try {
+          window.sessionStorage.setItem('authenticated', 'true');
+          window.sessionStorage.setItem('user', JSON.stringify({...user, accessToken: accessToken}));
+        } catch (err) {
+          console.error(err);
+        }
+  
+        dispatch({
+          type: HANDLERS.SIGN_IN,
+          payload: {...user, accessToken: accessToken}
+        });
+      } else {
+        throw new Error('Please check your email and password');
+      }
     } catch (err) {
       console.error(err);
+      throw err; // Re-throw the error for further handling if needed
     }
-
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
-    };
-
-    dispatch({
-      type: HANDLERS.SIGN_IN,
-      payload: user
-    });
   };
-
-  const signIn = async (email, password) => {
-    if (email !== 'demo@devias.io' || password !== 'Password123!') {
-      throw new Error('Please check your email and password');
-    }
-
-    try {
-      window.sessionStorage.setItem('authenticated', 'true');
-    } catch (err) {
-      console.error(err);
-    }
-
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
-    };
-
-    dispatch({
-      type: HANDLERS.SIGN_IN,
-      payload: user
-    });
-  };
+  
 
   const signUp = async (email, name, password) => {
     throw new Error('Sign up is not implemented');
   };
 
   const signOut = () => {
+     window.sessionStorage.setItem('user', JSON.stringify({}));
     dispatch({
       type: HANDLERS.SIGN_OUT
+    });
+  };
+
+  const updateUser = (updatedUser) => {
+    try {
+      // Retrieve the current user from sessionStorage
+      const currentUser = JSON.parse(window.sessionStorage.getItem('user'));
+      // Merge the updatedUser with the currentUser
+      const mergedUser = { ...currentUser, ...updatedUser };
+      // Update sessionStorage with the merged user object
+      window.sessionStorage.setItem('user', JSON.stringify(mergedUser));
+    } catch (err) {
+      console.error(err);
+    }
+  
+    dispatch({
+      type: HANDLERS.UPDATE_USER,
+      payload: updatedUser
     });
   };
 
@@ -165,10 +179,10 @@ export const AuthProvider = (props) => {
     <AuthContext.Provider
       value={{
         ...state,
-        skip,
         signIn,
         signUp,
-        signOut
+        signOut,
+        updateUser,
       }}
     >
       {children}
